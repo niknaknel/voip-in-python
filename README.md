@@ -1,5 +1,8 @@
 # Ideas for VoIP in Python
 
+### Styling the GUI
+ttk with themes: [ttkthemes](https://github.com/RedFantom/ttkthemes)
+
 ## Use `PyAudio` package
 
 Home page: [PyAudio](http://people.csail.mit.edu/hubert/pyaudio/)
