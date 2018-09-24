@@ -100,6 +100,8 @@ def send(data, dest):
 
 ### Questions
 
+>> Could we send control messages through the server? Is it necessary?
+
 * How will the receiving be handled? (threading!)
 	- incoming queue? (block during recording? or block recording during send? or mix recording and receiving)
 * How can we implement voice note functionality?
@@ -116,5 +118,10 @@ Which are essential?
 	- normalization
 	- silence detection (possibly use as recording trigger)
 
-### Bc i wanna be super extra
-Look into **video** lolz. (unrealistic and unecessary af!)
+ **Maybe use**: [`rattelsnake`](https://github.com/loehnertz/rattlesnake)
+
+### Experiments
+* Measure latency for different chunk sizes (vs BUFFER)
+* Measure latency/effects of different sample rates
+* Measure noise levels
+

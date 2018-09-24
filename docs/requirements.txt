@@ -1,2 +1,5 @@
 ttkthemes==2.1.0
 tkinterhtml==0.7
+PyAudio==0.2.11
+# sudo apt install libasound-dev portaudio19-dev libportaudiocpp0
+
