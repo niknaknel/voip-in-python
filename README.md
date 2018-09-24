@@ -100,7 +100,11 @@ def send(data, dest):
 
 ### Questions
 
->> Could we send control messages through the server? Is it necessary?
+>> Could we send control messages through the server?
+Because then:
+	- no need for `conn()`
+	- normal send/recv style
+	- recv addresses from server and bind UDP to those when call request is made
 
 * How will the receiving be handled? (threading!)
 	- incoming queue? (block during recording? or block recording during send? or mix recording and receiving)
