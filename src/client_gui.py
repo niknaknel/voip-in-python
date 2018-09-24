@@ -1,3 +1,4 @@
+# coding=utf-8
 
 from ttkthemes import themed_tk as tk
 import ttk
@@ -13,6 +14,11 @@ import time
 UBUNTU_ORANGE_100 = "#E95420"
 UBUNTU_ORANGE_80 = "#ED764D"
 UBUNTU_LIGHT_GREY = "#F5F4F2"
+UBUNTU_WARM_GREY_100 = "#AEA79F"
+UBUNTU_WARM_GREY_45 = "#DAD7D3"
+UBUNTU_COOL_GREY = "#333333"
+CANONICAL_AUBERGINE_100 = "#772953"
+CANONICAL_AUBERGINE_90 = "#843E64"
 GREEN_DARK = "#1F4820"
 GREEN_LIGHT = "#2b602c"
 RED_CHERRY = "#D33F3F"
@@ -159,6 +165,58 @@ class ClientGUI:
         self.PLAY_AUDIO_THREAD.setDaemon(True)
         self.PLAY_AUDIO_THREAD.start()
 
+# -------------------- Channel handlers --------------------- #
+
+    def select_channel(self, event=None):
+        if self.lbxChannels.curselection():
+            channel = self.lbxChannels.get(self.lbxChannels.curselection())
+            self.CURRENT_CHANNEL = channel
+            self.lblHeader.configure(text="Ready to place call to {0}.".format(channel))
+
+    def create_channel(self):
+        # get selection
+        if not self.lbxChannels.curselection():
+            print("None selected!")
+            return
+        elif len(self.lbxChannels.curselection()) < 2:
+            print("Please select at least 2 contacts")
+            return
+
+        # get selection
+        channel = self.lbxChannels.selection_get()
+
+        # get channel name
+        self.popup("Name your channel:")
+        if self.get_value():
+            name = self.get_value()
+        else:
+            self.cancel_channel_creation()
+            return
+
+        # add to channels (just printing for now)
+        print name, ": \n", channel
+
+        ### TODO: attempt to create channel?
+
+        # insert channel
+        self.lbxChannels.insert(0, name)
+
+        # hide buttons
+        self.cancel_channel_creation()
+
+    def cancel_channel_creation(self):
+        if self.lbxChannels.curselection():
+            self.lbxChannels.selection_clear(0, END)
+
+        # hide buttons
+        self.btnCreate.lower(self.btnAddChannel)
+        self.btnCancel.lower(self.btnAddChannel)
+
+        # revert lbx
+        self.lbxChannels.configure(selectmode=SINGLE, fg=UBUNTU_COOL_GREY)
+
+
+
 # --------------------- GUI repainting ----------------------- #
 
     def repaint_call(self):
@@ -166,6 +224,11 @@ class ClientGUI:
             # disable recording playback
             self.pause_audio()
             self.btnPlayPause.configure(state="disabled")
+
+            # disable channel change
+            idx = self.user_index(self.CURRENT_CHANNEL)
+            self.lbxChannels.itemconfig(idx, selectbackground=GREEN_LIGHT, selectforeground=UBUNTU_LIGHT_GREY)
+            self.lbxChannels.configure(state="disabled")
 
             # repaint button and header
             self.btnCall.configure(command=self.stop_call, image=self.icon_end_call,
@@ -178,6 +241,11 @@ class ClientGUI:
         else:
             # enable recording playbacks
             self.btnPlayPause.configure(state="normal")
+
+            # enable channel change
+            idx = self.user_index(self.CURRENT_CHANNEL)
+            self.lbxChannels.itemconfig(idx, selectbackground='lightgray', selectforeground='black')
+            self.lbxChannels.configure(state="normal")
 
             # repaint button and header
             self.btnCall.configure(command=self.start_call, image=self.icon_call,
@@ -194,6 +262,9 @@ class ClientGUI:
             self.pause_audio()
             self.btnPlayPause.configure(state="disabled")
 
+            # disable channel change
+            self.lbxChannels.configure(state="disabled")
+
             # repaint button and header
             self.btnSend.configure(command=self.stop_recording, bg=RED_CHERRY, activebackground=RED_CHERRY_LIGHT)
             self.lblHeader.configure(text="Recording stopped.", bg=RED_CHERRY)
@@ -201,6 +272,9 @@ class ClientGUI:
         else:
             # enable recording playbacks
             self.btnPlayPause.configure(state="normal")
+
+            # enable channel change
+            self.lbxChannels.configure(state="normal")
 
             # repaint button and header
             self.btnSend.configure(command=self.start_recording, image=self.icon_send, bg=UBUNTU_ORANGE_100, activebackground=UBUNTU_ORANGE_80)
@@ -251,7 +325,32 @@ class ClientGUI:
             # change button functionality
             self.btnSend.configure(command=self.send_msg, image=self.icon_send)
 
+    def change_lbx_mode(self):
+        self.lbxChannels.configure(selectmode=MULTIPLE, fg=UBUNTU_WARM_GREY_100)
+
+        # show other buttons
+        self.btnCreate.lift(self.btnAddChannel)
+        self.btnCancel.lift(self.btnAddChannel)
+
+    def popup(self, msg):
+        self.pop = PopupWindow(self.root, msg)
+        self.btnCreate.configure(state="disabled")
+        self.root.wait_window(self.pop.top)
+        self.btnCreate.configure(state="normal")
+
+    def get_value(self):
+        try:
+            return self.pop.value
+        except:
+            return None
+
+
 # ---------------------- Helper functions ----------------------- #
+
+    def user_index(self, uname):
+        items = list(self.lbxChannels.get(0, END))
+        idx = items.index(uname)
+        return idx
 
     def format_time(self, arg):
         if type(arg) == int:
@@ -304,6 +403,7 @@ class ClientGUI:
         self.SELECTED_RECORDING = ""
         self.REC_PLAY_POS = 0
         self.PLAYING_RECORDING = False
+        self.CURRENT_CHANNEL = "none"
 
         # -- Tabs -- #
         self.tabControl = ttk.Notebook(self.root)
@@ -337,16 +437,39 @@ class ClientGUI:
                               highlightcolor=GREEN_DARK, highlightbackground=GREEN_DARK,
                               relief="flat")
         self.btnSend = Button(self.tabMain, image=self.icon_send, bg=UBUNTU_ORANGE_100, activebackground=UBUNTU_ORANGE_80)
-        self.btnAddChannel = Button(self.tabMain, text="Add new channel")
+        self.btnAddChannel = Button(self.tabMain, text="Add new channel ➕", command=self.change_lbx_mode,
+                                    fg=UBUNTU_COOL_GREY, activeforeground=UBUNTU_COOL_GREY)
+        self.btnCreate = Button(self.tabMain, text="Create from selection", command=self.create_channel,
+                                bg=CANONICAL_AUBERGINE_100, activebackground=CANONICAL_AUBERGINE_90,
+                                fg=UBUNTU_LIGHT_GREY, activeforeground=UBUNTU_LIGHT_GREY)
+        self.btnCancel = Button(self.tabMain, text="Cancel", command=self.cancel_channel_creation,
+                                bg=UBUNTU_ORANGE_100, activebackground=UBUNTU_ORANGE_80,
+                                fg=UBUNTU_LIGHT_GREY, activeforeground=UBUNTU_LIGHT_GREY)
+
         self.btnCall.place(x=SCALE_X*9, y=0, width=SCALE_X, height=SCALE_Y)
         self.btnSend.place(x=SCALE_X*9, y=SCALE_Y*6, width=SCALE_X, height=SCALE_Y)
         self.btnAddChannel.place(x=0, y=SCALE_Y*6, width=SCALE_X*3, height=SCALE_Y)
+        self.btnCreate.place(x=0, y=SCALE_Y * 6, width=SCALE_X*3, height=floor(SCALE_Y / 2))
+        self.btnCancel.place(x=0, y=floor(SCALE_Y*6.5), width=SCALE_X*3, height=floor(SCALE_Y/2))
+        self.btnCreate.lower(self.btnAddChannel)
+        self.btnCancel.lower(self.btnAddChannel)
 
         # -- List Box -- #
-        self.lbxChannels = Listbox(self.tabMain, name='listbox', selectmode=SINGLE)
+        self.lbxChannels = Listbox(self.tabMain, name='listbox', selectmode=SINGLE, fg=UBUNTU_COOL_GREY)
         self.lbxChannels.grid(row=1, column=0, columnspan=3, rowspan=5)
         self.lbxChannels.place(x=0, y=SCALE_Y, width=SCALE_X*3, height=SCALE_Y*5)
-        #self.lbxChannels.bind('<<ListboxSelect>>', self.select_contact)
+        self.lbxChannels.bind('<<ListboxSelect>>', self.select_channel)
+        # add examples
+        self.lbxChannels.insert(0, "Annika")
+        self.lbxChannels.insert(0, "Lucia")
+        self.lbxChannels.insert(0, "Jane")
+        self.lbxChannels.insert(0, "Liso")
+        self.lbxChannels.insert(0, "Micky")
+        self.lbxChannels.insert(0, "Kristin")
+        self.lbxChannels.insert(0, "Clarice")
+        self.lbxChannels.insert(0, "Thaakiyah")
+        self.lbxChannels.insert(0, "Kyle")
+        self.lbxChannels.insert(0, "Kgabo")
 
         # -- Entry -- #
         self.inputContent = StringVar()
@@ -423,6 +546,36 @@ class ClientGUI:
         self.RECORDING_ACTIVE = False
 
         self.root.destroy()
+
+# --------------------------------------------------------------- #
+
+# ------------------------- Popup window -------------------------#
+class PopupWindow(object):
+    def __init__(self, master, msg):
+        self.top = Toplevel(master)
+
+        positionRight = master.winfo_x() + int(master.winfo_width()/3)
+        positionDown = master.winfo_y() + int(master.winfo_height()/3)
+
+        # Positions the window in the center of the page.
+        self.top.geometry("+{}+{}".format(positionRight, positionDown))
+
+        self.top.resizable(0, 0)
+        self.top.geometry("200x120")
+        self.top.configure(bg=UBUNTU_LIGHT_GREY)
+
+        self.lbl = ttk.Label(self.top, text=msg)
+        self.lbl.place(x=100, y=25, width=150, height=20, anchor=CENTER)
+        self.ent = Entry(self.top)
+        self.ent.place(x=15, y=40)
+        self.ok = ttk.Button(self.top, text='Ok', command=self.cleanup)
+        self.ok.place(x=30, y=65)
+
+    def cleanup(self):
+        self.value=self.ent.get()
+        self.top.destroy()
+
+# From: https://stackoverflow.com/questions/10020885/creating-a-popup-message-box-with-an-entry-field
 
 # --------------------------------------------------------------- #
 
