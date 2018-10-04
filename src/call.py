@@ -82,7 +82,7 @@ class Call:
         while self.SESSION_ACTIVE:
             if not self.outgoing.empty():
                 data = self.outgoing.get()
-                sock.sendto(data, address
+                sock.sendto(data, address)
             else:
                 time.sleep(0.1)
 

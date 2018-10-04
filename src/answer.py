@@ -75,7 +75,6 @@ class Answer:
 
                 if msg == "quit":
                     self.SESSION_ACTIVE = False
-                    print(self.SESSION_ACTIVE)
                     break
 
             except error as e:
@@ -129,7 +128,7 @@ class Answer:
             if self.incoming.qsize() == BUFFER:
                 while self.SESSION_ACTIVE:
                     stream.write(self.incoming.get(), CHUNK)
-		    print(time.time())
+                    print(time.time())
 
     def save_wav(self, file_name, frames):
         print("writing %s to file" % file_name)
