@@ -20,7 +20,7 @@ CODE_CALL_ACCEPTED = 3
 
 CHUNK = 1024
 WIDTH = 2
-CHANNELS = 1
+CHANNELS = 2
 RATE = 44100
 
 peers = {}
@@ -59,35 +59,32 @@ class Call:
         except Exception as e:
             print(traceback.format_exc(e))
 
-    def record_audio(self, sock, address, call=True):
+    def record_audio(self, sock, address):
         stream = self.p.open(format=self.p.get_format_from_width(WIDTH),
                              channels=CHANNELS,
                              rate=RATE,
                              input=True,
                              frames_per_buffer=CHUNK)
 
-        print("* recording...")
         STREAM_THREAD = Thread(target=self.stream_audio, args=(sock, address))
         STREAM_THREAD.setDaemon(True)
         STREAM_THREAD.start()
 
         while self.SESSION_ACTIVE:
             data = stream.read(CHUNK)
-            if call:
-                self.outgoing.put(data)
-
-        print("* done")
+            print(time.time())
+            self.outgoing.put(data)
 
         stream.stop_stream()
         stream.close()
 
     def stream_audio(self, sock, address):
-        while True:
+        while self.SESSION_ACTIVE:
             if not self.outgoing.empty():
                 data = self.outgoing.get()
-                sock.sendto(data, address)  # function that sends chunk to specified destination
+                sock.sendto(data, address
             else:
-                time.sleep(0.2)  # to lighten the load. Also acts as a buffer!
+                time.sleep(0.1)
 
     # ----------------------- Call functions ---------------------- #
 

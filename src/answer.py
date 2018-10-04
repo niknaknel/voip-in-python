@@ -20,7 +20,7 @@ CODE_CALL_ACCEPTED = 3
 
 CHUNK = 1024
 WIDTH = 2
-CHANNELS = 1
+CHANNELS = 2
 RATE = 44100
 
 peers = {}
@@ -103,7 +103,6 @@ class Answer:
         PLAY_INCOMING_AUDIO_THREAD.start()
 
     def recv_incoming_stream(self, sock):
-        print("play incoming")
         stream = self.p.open(format=self.p.get_format_from_width(WIDTH),
                              channels=CHANNELS,
                              rate=RATE,
@@ -113,23 +112,24 @@ class Answer:
         PLAY_THREAD.setDaemon(True)
         PLAY_THREAD.start()
 
-        frames = []
+        # frames = []
         while self.SESSION_ACTIVE:
             data = sock.recvfrom(CHUNK * CHANNELS * 2)[0]
             self.incoming.put(data)
-            frames.append(data)
+            # frames.append(data)
 
         stream.stop_stream()
         stream.close()
 
-        self.save_wav("output.wav", frames)
+        # self.save_wav("output.wav", frames)
 
     def play_incoming_audio(self, stream):
         BUFFER = 8
-        while True:
+        while self.SESSION_ACTIVE:
             if self.incoming.qsize() == BUFFER:
-                while True:
+                while self.SESSION_ACTIVE:
                     stream.write(self.incoming.get(), CHUNK)
+		    print(time.time())
 
     def save_wav(self, file_name, frames):
         print("writing %s to file" % file_name)
